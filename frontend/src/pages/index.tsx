@@ -4,29 +4,22 @@ import { fetchData } from '@/app/api';
 
 const UserListPage = () => {
   const [users, setUsers] = useState<any[]>([]);
-  const [privileges, setPrivileges] = useState<any[]>([]);
 
   useEffect(() => {
     fetchData('users')
       .then((data) => {
-        setUsers(data || []);
+        console.log("API DATA:", data); // ✅ debug
+        setUsers(Array.isArray(data) ? data : []);
       })
       .catch((error) => {
         console.error('Error fetching users:', error);
-      });
-
-    fetchData('privilages')
-      .then((data) => {
-        setPrivileges(data || []);
-      })
-      .catch((error) => {
-        console.error('Error fetching privileges:', error);
+        setUsers([]);
       });
   }, []);
 
-  // ✅ SAFE COLOR FUNCTION (no crash)
-  const getColor = (roles: string[] = []) => {
-    if (!roles || roles.length === 0) return "bg-gray-500";
+  // ✅ SAFE COLOR FUNCTION
+  const getColor = (roles: any) => {
+    if (!Array.isArray(roles)) return "bg-gray-500";
 
     if (roles.includes("ADMIN")) return "bg-red-500";
     if (roles.includes("DEVOPS")) return "bg-orange-500";
@@ -39,19 +32,18 @@ const UserListPage = () => {
   return (
     <div className="h-screen flex flex-col">
 
-      {/* TOP SECTION */}
       <div className="flex h-1/2">
 
-        {/* USERS LIST */}
+        {/* USERS */}
         <div className="w-1/2 border-r border-gray-300 p-4">
           <h2 className="text-xl font-bold m-4">Users List</h2>
 
           {users.length === 0 ? (
-            <div className="text-gray-500">No users found</div>
+            <div>No users</div>
           ) : (
             users.map((user) => (
-              <div key={user.id} className="h-20 flex items-center px-4 card mt-2">
-                <div>{user.username}</div>
+              <div key={user?.id || Math.random()} className="h-20 flex items-center px-4 mt-2">
+                {user?.username || "Unknown"}
               </div>
             ))
           )}
@@ -61,35 +53,29 @@ const UserListPage = () => {
         <div className="w-1/2 p-4">
           <h2 className="text-xl font-bold m-4">Designations</h2>
 
-          {users.length === 0 ? (
-            <div className="text-gray-500">No data</div>
-          ) : (
-            users.map((user) => (
-              <div key={user.id} className="h-20 flex items-center px-4 card mt-2">
-                <div>{(user.previlages || []).join(", ")}</div>
-              </div>
-            ))
-          )}
+          {users.map((user) => (
+            <div key={user?.id || Math.random()} className="h-20 flex items-center px-4 mt-2">
+              {(user?.previlages && Array.isArray(user.previlages))
+                ? user.previlages.join(", ")
+                : "No roles"}
+            </div>
+          ))}
         </div>
 
       </div>
 
-      {/* BOTTOM SECTION */}
+      {/* COLORS */}
       <div className="flex-grow bg-gray-200 p-4">
         <h2 className="text-xl font-bold mb-4">Users with Different Designations</h2>
 
-        {users.length === 0 ? (
-          <div className="text-gray-500">No users available</div>
-        ) : (
-          users.map((user) => (
-            <div
-              key={user.id}
-              className={`${getColor(user.previlages || [])} h-16 rounded-md p-2 mb-2 card mt-2 text-black`}
-            >
-              {user.username}
-            </div>
-          ))
-        )}
+        {users.map((user) => (
+          <div
+            key={user?.id || Math.random()}
+            className={`${getColor(user?.previlages)} h-16 rounded-md p-2 mb-2 text-black`}
+          >
+            {user?.username || "Unknown"}
+          </div>
+        ))}
 
       </div>
 
