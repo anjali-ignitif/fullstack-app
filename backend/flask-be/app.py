@@ -12,7 +12,7 @@ class RoleType(enum.Enum):
     MONITOR = "monitor"
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://username:password@host:port/database"
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://myuser:mypassword@localhost:5432/mydb"
 db = SQLAlchemy(app)
 cors = CORS(app, resources={r"/*": {"origins": "exampledomain.com"}})
 
