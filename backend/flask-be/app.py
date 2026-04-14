@@ -5,31 +5,22 @@ from sqlalchemy import Integer, String, ForeignKey
 from sqlalchemy_utils import ChoiceType
 from flask_cors import CORS
 
-# ------------------ ENUM ------------------
 class RoleType(enum.Enum):
     ADMIN = "admin"
     DEVOPS = "devops"
     DEVELOPER = "developer"
     MONITOR = "monitor"
 
-# ------------------ APP CONFIG ------------------
 app = Flask(__name__)
-
-# ✅ FIXED DB CONFIG (use your PostgreSQL values)
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://myuser:mypassword@localhost:5432/mydb"
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://username:password@host:port/database"
 db = SQLAlchemy(app)
+cors = CORS(app, resources={r"/*": {"origins": "exampledomain.com"}})
 
-# ✅ FIXED CORS (allow all for now)
-CORS(app)
-
-# ------------------ MODELS ------------------
 class User(db.Model):
     id = db.Column(Integer, primary_key=True)
     username = db.Column(String, unique=True, nullable=False)
     email = db.Column(String)
-    privilages = db.relationship("Privilage", back_populates="user", cascade="all, delete")
+    privilages = db.relationship("Privilage", back_populates="user")
 
 class Privilage(db.Model):
     id = db.Column(Integer, primary_key=True)
@@ -37,7 +28,6 @@ class Privilage(db.Model):
     user_id = db.Column(Integer, ForeignKey("user.id", ondelete="CASCADE"))
     user = db.relationship(User, back_populates="privilages")
 
-# ------------------ SAMPLE DATA ------------------
 def populate_sample_data():
     sample_data = [
         {
@@ -85,7 +75,7 @@ def populate_sample_data():
 
     db.session.commit()
 
-# ------------------ ROUTES ------------------
+
 @app.route("/users")
 def get_users():
     users = User.query.all()
@@ -94,23 +84,24 @@ def get_users():
             "id": user.id,
             "username": user.username,
             "email": user.email,
-            "privilages": [p.role.name for p in user.privilages],
+            "previlages": [p.role.name for p in user.privilages],
         }
         for user in users
     ]
+
 
 @app.route("/privilages")
 def get_privilages():
     return [role.name for role in RoleType]
 
-# ------------------ DB INIT (IMPORTANT) ------------------
-def init_db():
+
+
+if __name__ == "__main__":
     with app.app_context():
         db.create_all()
+
+        # Check if data already exists and only populate if it doesn't
         if not User.query.first():
             populate_sample_data()
 
-# ------------------ MAIN ------------------
-if __name__ == "__main__":
-    init_db()
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=8000)
