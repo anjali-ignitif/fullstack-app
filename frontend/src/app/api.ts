@@ -1,6 +1,14 @@
 export const fetchData = async (endpoint: string) => {
-    const BASE_URL = "http://13.232.82.206:5000";
+    try {
+        const response = await fetch(`/api/${endpoint}`);  // ✅ IMPORTANT
 
-    const response = await fetch(`${BASE_URL}/${endpoint}`);
-    return await response.json();
+        if (!response.ok) {
+            throw new Error(`API request failed with status ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('API Error:', error);
+        throw error;
+    }
 };
