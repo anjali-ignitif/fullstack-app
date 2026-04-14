@@ -22,22 +22,31 @@ const UserListPage = () => {
 
   useEffect(() => {
     fetchData('users')
-      .then((data) => setUsers(data))
-      .catch((error) => console.error(error));
+      .then((data) => {
+        setUsers(Array.isArray(data) ? data : []);
+      })
+      .catch((error) => {
+        console.error('Error fetching users:', error);
+        setUsers([]);
+      });
   }, []);
 
   return (
     <div className="h-screen flex flex-col">
-      
+
       {/* TOP SECTION */}
       <div className="flex h-1/2">
-        
+
         {/* USERS */}
         <div className="w-1/2 border-r border-gray-300 p-4">
           <h2 className="text-xl font-bold m-4">Users List</h2>
+
           {users.map((user) => (
-            <div key={user.id} className="h-20 flex items-center px-4 card mt-2">
-              {user.username}
+            <div
+              key={user?.id}
+              className="h-20 flex items-center px-4 mt-2"
+            >
+              {user?.username || 'Unknown'}
             </div>
           ))}
         </div>
@@ -45,14 +54,23 @@ const UserListPage = () => {
         {/* DESIGNATIONS */}
         <div className="w-1/2 p-4">
           <h2 className="text-xl font-bold m-4">Designations</h2>
-          {users.map((user) => (
-            <div key={user.id} className="h-20 flex items-center px-4 card mt-2">
-              {user.previlages?.length > 0
-                ? user.previlages.join(', ')
-                : 'No roles'}
-            </div>
-          ))}
+
+          {users.map((user) => {
+            const roles = Array.isArray(user?.previlages)
+              ? user.previlages
+              : [];
+
+            return (
+              <div
+                key={user?.id}
+                className="h-20 flex items-center px-4 mt-2"
+              >
+                {roles.length > 0 ? roles.join(', ') : 'No roles'}
+              </div>
+            );
+          })}
         </div>
+
       </div>
 
       {/* BOTTOM SECTION */}
@@ -62,18 +80,23 @@ const UserListPage = () => {
         </h2>
 
         {users.map((user) => {
-          const role = user.previlages?.[0];
+          const roles = Array.isArray(user?.previlages)
+            ? user.previlages
+            : [];
+
+          const role = roles[0]; // ✅ safe access
 
           return (
             <div
-              key={user.id}
+              key={user?.id}
               className={`${getColor(role)} h-16 rounded-md p-2 mb-2`}
             >
-              {user.username}
+              {user?.username || 'Unknown'} — {roles.join(', ')}
             </div>
           );
         })}
       </div>
+
     </div>
   );
 };
