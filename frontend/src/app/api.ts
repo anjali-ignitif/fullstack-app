@@ -1,5 +1,6 @@
 export const fetchData = async (endpoint: string) => {
-    const response = await fetch(`/api/${endpoint}`);
+    const BASE_URL = "http://<YOUR-EC2-PUBLIC-IP>:5000";
+
+    const response = await fetch(`${BASE_URL}/${endpoint}`);
     return await response.json();
 };
-// test change
