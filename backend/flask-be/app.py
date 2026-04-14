@@ -104,4 +104,4 @@ if __name__ == "__main__":
         if not User.query.first():
             populate_sample_data()
 
-    app.run(host="0.0.0.0", port=8000)
+    app.run(host="0.0.0.0", port=5000)
