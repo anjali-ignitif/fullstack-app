@@ -1,5 +1,3 @@
-// api.ts
-
 export const fetchData = async (endpoint: string) => {
     try {
         const response = await fetch(`/api/${endpoint}`);
@@ -8,8 +6,7 @@ export const fetchData = async (endpoint: string) => {
             throw new Error(`API request failed with status ${response.status}`);
         }
 
-        const responseData = await response.json();
-        return responseData;
+        return await response.json();
     } catch (error) {
         console.error('API Error:', error);
         throw error;
