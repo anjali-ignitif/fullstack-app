@@ -1,11 +1,8 @@
-// api.js
-
-const BASE_URL = 'http://exampleendpointurl.com/api/';
+// api.ts
 
 export const fetchData = async (endpoint: string) => {
     try {
-        let url = BASE_URL + endpoint
-        const response = await fetch(url);
+        const response = await fetch(`/api/${endpoint}`);
 
         if (!response.ok) {
             throw new Error(`API request failed with status ${response.status}`);
