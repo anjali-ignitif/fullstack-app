@@ -8,16 +8,14 @@ const UserListPage = () => {
   useEffect(() => {
     fetchData('users')
       .then((data) => {
-        console.log("API DATA:", data); // ✅ debug
         setUsers(Array.isArray(data) ? data : []);
       })
       .catch((error) => {
-        console.error('Error fetching users:', error);
+        console.error(error);
         setUsers([]);
       });
   }, []);
 
-  // ✅ SAFE COLOR FUNCTION
   const getColor = (roles: any) => {
     if (!Array.isArray(roles)) return "bg-gray-500";
 
@@ -35,18 +33,14 @@ const UserListPage = () => {
       <div className="flex h-1/2">
 
         {/* USERS */}
-        <div className="w-1/2 border-r border-gray-300 p-4">
+        <div className="w-1/2 border-r p-4">
           <h2 className="text-xl font-bold m-4">Users List</h2>
 
-          {users.length === 0 ? (
-            <div>No users</div>
-          ) : (
-            users.map((user) => (
-              <div key={user?.id || Math.random()} className="h-20 flex items-center px-4 mt-2">
-                {user?.username || "Unknown"}
-              </div>
-            ))
-          )}
+          {users.map((user) => (
+            <div key={user?.id} className="h-20 flex items-center px-4 mt-2">
+              {user?.username}
+            </div>
+          ))}
         </div>
 
         {/* DESIGNATIONS */}
@@ -54,8 +48,8 @@ const UserListPage = () => {
           <h2 className="text-xl font-bold m-4">Designations</h2>
 
           {users.map((user) => (
-            <div key={user?.id || Math.random()} className="h-20 flex items-center px-4 mt-2">
-              {(user?.previlages && Array.isArray(user.previlages))
+            <div key={user?.id} className="h-20 flex items-center px-4 mt-2">
+              {Array.isArray(user?.previlages)
                 ? user.previlages.join(", ")
                 : "No roles"}
             </div>
@@ -68,15 +62,18 @@ const UserListPage = () => {
       <div className="flex-grow bg-gray-200 p-4">
         <h2 className="text-xl font-bold mb-4">Users with Different Designations</h2>
 
-        {users.map((user) => (
-          <div
-            key={user?.id || Math.random()}
-            className={`${getColor(user?.previlages)} h-16 rounded-md p-2 mb-2 text-black`}
-          >
-            {user?.username || "Unknown"}
-          </div>
-        ))}
+        {users.map((user) => {
+          const roles = Array.isArray(user?.previlages) ? user.previlages : [];
 
+          return (
+            <div
+              key={user?.id}
+              className={`${getColor(roles)} h-16 rounded-md p-2 mb-2 text-black`}
+            >
+              {user?.username}
+            </div>
+          );
+        })}
       </div>
 
     </div>
