@@ -2,43 +2,42 @@ import '../app/globals.css';
 import React, { useEffect, useState } from 'react';
 import { fetchData } from '@/app/api';
 
+const getColor = (role: string) => {
+  switch (role) {
+    case 'ADMIN':
+      return 'bg-red-500 text-white';
+    case 'DEVOPS':
+      return 'bg-yellow-500 text-white';
+    case 'DEVELOPER':
+      return 'bg-green-500 text-white';
+    case 'MONITOR':
+      return 'bg-cyan-500 text-white';
+    default:
+      return 'bg-gray-500 text-white';
+  }
+};
+
 const UserListPage = () => {
   const [users, setUsers] = useState<any[]>([]);
 
   useEffect(() => {
     fetchData('users')
-      .then((data) => {
-        setUsers(Array.isArray(data) ? data : []);
-      })
-      .catch((error) => {
-        console.error(error);
-        setUsers([]);
-      });
+      .then((data) => setUsers(data))
+      .catch((error) => console.error(error));
   }, []);
-
-  const getColor = (roles: any) => {
-    if (!Array.isArray(roles)) return "bg-gray-500";
-
-    if (roles.includes("ADMIN")) return "bg-red-500";
-    if (roles.includes("DEVOPS")) return "bg-orange-500";
-    if (roles.includes("DEVELOPER")) return "bg-green-500";
-    if (roles.includes("MONITOR")) return "bg-cyan-500";
-
-    return "bg-gray-500";
-  };
 
   return (
     <div className="h-screen flex flex-col">
-
+      
+      {/* TOP SECTION */}
       <div className="flex h-1/2">
-
+        
         {/* USERS */}
-        <div className="w-1/2 border-r p-4">
+        <div className="w-1/2 border-r border-gray-300 p-4">
           <h2 className="text-xl font-bold m-4">Users List</h2>
-
           {users.map((user) => (
-            <div key={user?.id} className="h-20 flex items-center px-4 mt-2">
-              {user?.username}
+            <div key={user.id} className="h-20 flex items-center px-4 card mt-2">
+              {user.username}
             </div>
           ))}
         </div>
@@ -46,36 +45,35 @@ const UserListPage = () => {
         {/* DESIGNATIONS */}
         <div className="w-1/2 p-4">
           <h2 className="text-xl font-bold m-4">Designations</h2>
-
           {users.map((user) => (
-            <div key={user?.id} className="h-20 flex items-center px-4 mt-2">
-              {Array.isArray(user?.previlages)
-                ? user.previlages.join(", ")
-                : "No roles"}
+            <div key={user.id} className="h-20 flex items-center px-4 card mt-2">
+              {user.previlages?.length > 0
+                ? user.previlages.join(', ')
+                : 'No roles'}
             </div>
           ))}
         </div>
-
       </div>
 
-      {/* COLORS */}
+      {/* BOTTOM SECTION */}
       <div className="flex-grow bg-gray-200 p-4">
-        <h2 className="text-xl font-bold mb-4">Users with Different Designations</h2>
+        <h2 className="text-xl font-bold mb-4">
+          Users with Different Designations
+        </h2>
 
         {users.map((user) => {
-          const roles = Array.isArray(user?.previlages) ? user.previlages : [];
+          const role = user.previlages?.[0];
 
           return (
             <div
-              key={user?.id}
-              className={`${getColor(roles)} h-16 rounded-md p-2 mb-2 text-black`}
+              key={user.id}
+              className={`${getColor(role)} h-16 rounded-md p-2 mb-2`}
             >
-              {user?.username}
+              {user.username}
             </div>
           );
         })}
       </div>
-
     </div>
   );
 };
