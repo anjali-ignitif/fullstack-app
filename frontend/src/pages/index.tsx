@@ -9,7 +9,7 @@ const UserListPage = () => {
   useEffect(() => {
     fetchData('users')
       .then((data) => {
-        setUsers(data);
+        setUsers(data || []);
       })
       .catch((error) => {
         console.error('Error fetching users:', error);
@@ -17,19 +17,22 @@ const UserListPage = () => {
 
     fetchData('privilages')
       .then((data) => {
-        setPrivileges(data);
+        setPrivileges(data || []);
       })
       .catch((error) => {
         console.error('Error fetching privileges:', error);
       });
   }, []);
 
-  // ✅ FIXED COLOR MAPPING
-  const getColor = (roles: string[]) => {
+  // ✅ SAFE COLOR FUNCTION (no crash)
+  const getColor = (roles: string[] = []) => {
+    if (!roles || roles.length === 0) return "bg-gray-500";
+
     if (roles.includes("ADMIN")) return "bg-red-500";
     if (roles.includes("DEVOPS")) return "bg-orange-500";
     if (roles.includes("DEVELOPER")) return "bg-green-500";
     if (roles.includes("MONITOR")) return "bg-cyan-500";
+
     return "bg-gray-500";
   };
 
@@ -42,21 +45,31 @@ const UserListPage = () => {
         {/* USERS LIST */}
         <div className="w-1/2 border-r border-gray-300 p-4">
           <h2 className="text-xl font-bold m-4">Users List</h2>
-          {users.map((user) => (
-            <div key={user.id} className="h-20 flex items-center px-4 card mt-2">
-              <div>{user.username}</div>
-            </div>
-          ))}
+
+          {users.length === 0 ? (
+            <div className="text-gray-500">No users found</div>
+          ) : (
+            users.map((user) => (
+              <div key={user.id} className="h-20 flex items-center px-4 card mt-2">
+                <div>{user.username}</div>
+              </div>
+            ))
+          )}
         </div>
 
         {/* DESIGNATIONS */}
         <div className="w-1/2 p-4">
           <h2 className="text-xl font-bold m-4">Designations</h2>
-          {users.map((user) => (
-            <div key={user.id} className="h-20 flex items-center px-4 card mt-2">
-              <div>{user.previlages.join(", ")}</div>
-            </div>
-          ))}
+
+          {users.length === 0 ? (
+            <div className="text-gray-500">No data</div>
+          ) : (
+            users.map((user) => (
+              <div key={user.id} className="h-20 flex items-center px-4 card mt-2">
+                <div>{(user.previlages || []).join(", ")}</div>
+              </div>
+            ))
+          )}
         </div>
 
       </div>
@@ -65,14 +78,18 @@ const UserListPage = () => {
       <div className="flex-grow bg-gray-200 p-4">
         <h2 className="text-xl font-bold mb-4">Users with Different Designations</h2>
 
-        {users.map((user) => (
-          <div
-            key={user.id}
-            className={`${getColor(user.previlages)} h-16 rounded-md p-2 mb-2 card mt-2 text-black`}
-          >
-            {user.username}
-          </div>
-        ))}
+        {users.length === 0 ? (
+          <div className="text-gray-500">No users available</div>
+        ) : (
+          users.map((user) => (
+            <div
+              key={user.id}
+              className={`${getColor(user.previlages || [])} h-16 rounded-md p-2 mb-2 card mt-2 text-black`}
+            >
+              {user.username}
+            </div>
+          ))
+        )}
 
       </div>
 
