@@ -1,92 +1,71 @@
 version: 2.1
 
-orbs:
-  node: circleci/node@5.0.0
-  python: circleci/python@2.0.0
-
 jobs:
 
-  build-frontend:
+  build:
     docker:
       - image: cimg/node:18.0
     steps:
       - checkout
       - run:
-          name: Install & Build Frontend
+          name: Build Frontend
           command: |
             cd frontend
             npm install
             npm run build
-      - persist_to_workspace:
-          root: .
-          paths:
-            - frontend/build
-
-  build-backend:
-    docker:
-      - image: cimg/python:3.10
-    steps:
-      - checkout
-      - run:
-          name: Install Backend
-          command: |
-            cd backend
-            pip install -r requirements.txt
-      - persist_to_workspace:
-          root: .
-          paths:
-            - backend
 
   deploy:
     docker:
       - image: cimg/base:stable
     steps:
-      - attach_workspace:
-          at: .
       - add_ssh_keys:
-          fingerprints:
-            - "<your-key-fingerprint>"
+#          fingerprints:
+#            - "YOUR_FINGERPRINT"
       - run:
           name: Deploy to EC2
           command: |
-            ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST << 'EOF'
-              cd /home/ubuntu/fullstack-app
+            ssh -o StrictHostKeyChecking=no ubuntu@3.111.170.98 "
+              
+              cd ~/fullstack-app || git clone https://github.com/anjali-ignitif/fullstack-app.git fullstack-app && cd fullstack-app
+
               git pull origin main
 
+              # Backend
               cd backend
+              python3 -m venv venv
               source venv/bin/activate
               pip install -r requirements.txt
-              sudo systemctl restart gunicorn
 
-              cd ../frontend
+              # Restart Flask
+              pkill -f app.py || true
+              cd flask-be
+              nohup python app.py > app.log 2>&1 &
+
+              # Frontend
+              cd ../../frontend
               npm install
               npm run build
 
-              sudo systemctl restart nginx
-            EOF
+              # Restart Next.js
+              pkill -f next || true
+              nohup npm start > frontend.log 2>&1 &
+            "
 
 workflows:
   version: 2
 
-  build_and_test:
+  pipeline:
     jobs:
-      - build-frontend:
+      - build:
           filters:
             branches:
               only:
                 - develop
                 - main
 
-      - build-backend:
-          filters:
-            branches:
-              only:
-                - develop
-                - main
-
-  deploy_on_tag:
-    jobs:
       - deploy:
+          requires:
+            - build
           filters:
             tags:
               only: /^v.*/
