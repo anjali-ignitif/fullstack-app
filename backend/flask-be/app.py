@@ -12,9 +12,11 @@ class RoleType(enum.Enum):
     MONITOR = "monitor"
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql+psycopg2://myuser:password@>
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql+psycopg2://myuser:mypassword@localhost:5432/mydb"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
-cors = CORS(app, resources={r"/*": {"origins": "exampledomain.com"}})
+#cors = CORS(app, resources={r"/*": {"origins": "exampledomain.com"}})
+CORS(app)
 
 class User(db.Model):
     id = db.Column(Integer, primary_key=True)
@@ -63,15 +65,21 @@ def populate_sample_data():
 
     for data in sample_data:
         user = User.query.filter_by(username=data["username"]).first()
+
         if not user:
             user = User(username=data["username"], email=data["email"])
             db.session.add(user)
+            db.session.commit()  # commit to get user.id
 
         for priv_data in data["privilages"]:
-            privilage = Privilage.query.filter_by(user=user, role=priv_data["role"]).first()
+            privilage = Privilage.query.filter_by(
+                user_id=user.id,
+                role=priv_data["role"]
+            ).first()
+
             if not privilage:
-                privilage = Privilage(role=priv_data["role"])
-                user.privilages.append(privilage)
+                privilage = Privilage(role=priv_data["role"], user=user)
+                db.session.add(privilage)
 
     db.session.commit()
 
@@ -94,6 +102,9 @@ def get_users():
 def get_privilages():
     return [role.name for role in RoleType]
 
+@app.route("/")
+def home():
+    return "Flask is running!"
 
 
 if __name__ == "__main__":
@@ -104,4 +115,4 @@ if __name__ == "__main__":
         if not User.query.first():
             populate_sample_data()
 
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5000, debug=True)

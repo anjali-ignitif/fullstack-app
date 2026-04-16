@@ -1,6 +1,6 @@
 // api.js
 
-const BASE_URL = 'http://exampleendpointurl.com/api/';
+const BASE_URL = '/api/';
 
 export const fetchData = async (endpoint: string) => {
     try {

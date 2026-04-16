@@ -1,0 +1,22 @@
+nohup: ignoring input
+
+> haris-app@0.1.0 start
+> next start
+
+ ⨯ Failed to start server
+Error: listen EADDRINUSE: address already in use :::30Killed
+at Server.setupListenHandle [as _listen2] (node:net:1811:16)
+    at listenInCluster (node:net:1859:12)
+    at Server.listen (node:net:1947:7)
+    at /home/ubuntu/fullstack-app/frontend/node_modules/next/dist/server/lib/start-server.js:252:16
+    at new Promise (<anonymous>)
+    at startServer (/home/ubuntu/fullstack-app/frontend/node_modules/next/dist/server/lib/start-server.js:189:11)
+    at nextStart (/home/ubuntu/fullstack-app/frontend/node_modules/next/dist/cli/next-start.js:50:40)
+    at /home/ubuntu/fullstack-app/frontend/node_modules/next/dist/bin/next:156:54
+    at async main (/home/ubuntu/fullstack-app/frontend/node_modules/next/dist/bin/next:156:5) {
+  code: 'EADDRINUSE',
+  errno: -98,
+  syscall: 'listen',
+  address: '::',
+  port: 3000
+}
