@@ -1,0 +1,54 @@
+stages:
+  - build
+  - deploy
+
+# -----------------------
+# BUILD STAGE
+# -----------------------
+build_frontend:
+  stage: build
+  image: node:18
+  script:
+    - cd frontend
+    - npm install
+    - npm run build
+  only:
+    - main
+    - develop
+
+# -----------------------
+# DEPLOY STAGE
+# -----------------------
+deploy_to_ec2:
+  stage: deploy
+  image: ubuntu:22.04
+  before_script:
+    - apt update && apt install -y openssh-client git
+    - mkdir -p ~/.ssh
+    - echo "keygen" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan -H 13.206.102.133 >> ~/.ssh/known_hosts
+
+  script:
+    - ssh ubuntu@13.206.102.133 "
+        cd ~/fullstack-app &&
+        git pull origin main &&
+
+        cd backend &&
+        source venv/bin/activate &&
+        pip install -r requirements.txt &&
+
+        pkill -f app.py || true &&
+        cd flask-be &&
+        nohup python app.py > app.log 2>&1 &
+
+        cd ../../frontend &&
+        npm install &&
+        npm run build &&
+
+        pkill -f next || true &&
+        nohup npm start > frontend.log 2>&1 &
+      "
+
+  only:
+    - tags
