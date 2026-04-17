@@ -25,7 +25,7 @@ deploy_to_ec2:
   before_script:
     - apt update && apt install -y openssh-client git
     - mkdir -p ~/.ssh
-    - echo "keygen" > ~/.ssh/id_rsa
+    - echo "qEZ/k6yLVxfbl8Lypzs33n7nI+3KukbXArQNhgDRSyg" > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
     - ssh-keyscan -H 13.206.102.133 >> ~/.ssh/known_hosts
 
