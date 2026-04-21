@@ -1,18 +1,43 @@
 version: 2.1
 
+orbs:
+  node: circleci/node@5.0.0
+  python: circleci/python@2.0.0
+
 jobs:
 
-  build:
+  build-frontend:
     docker:
       - image: cimg/node:18.0
     steps:
       - checkout
       - run:
-          name: Build Frontend
+          name: Install & Build Frontend
           command: |
             cd frontend
-            npm install
+            npm ci
             npm run build
+      - persist_to_workspace:
+          root: frontend
+          paths:
+            - build
+
+  build-backend:
+    docker:
+      - image: cimg/python:3.10
+    steps:
+      - checkout
+      - run:
+          name: Install Backend Dependencies
+          command: |
+            cd backend
+            python -m venv venv
+            source venv/bin/activate
+            pip install -r requirements.txt
+      - persist_to_workspace:
+          root: backend
+          paths:
+            - .
 
   deploy:
     docker:
@@ -20,53 +45,80 @@ jobs:
     steps:
       - add_ssh_keys:
           fingerprints:
-            - "SHA256:qEZ/k6yLVxfbl8Lypzs33n7nI+3KukbXArQNhgDRSyg
-"
+            - "SHA256:qEZ/k6yLVxfbl8Lypzs33n7nI+3KukbXArQNhgDRSyg"
+
+      - attach_workspace:
+          at: .
+
       - run:
-          name: Deploy to EC2
+          name: Deploy to EC2 (Production Safe)
           command: |
-            ssh -o StrictHostKeyChecking=no ubuntu@3.111.170.98 "
+            ssh -o StrictHostKeyChecking=no ubuntu@$EC2_HOST << 'EOF'
 
-              cd ~/fullstack-app || git clone https://github.com/anjali-ignitif/fullstack-app.git fullstack-app && cd fullstack-app
+              set -e
 
-              git pull origin main
+              APP_DIR=~/fullstack-app
+              FRONTEND_DIR=$APP_DIR/frontend
+              BACKEND_DIR=$APP_DIR/backend
 
-              # Backend
-              cd backend
-              python3 -m venv venv
+              # Ensure project directory exists
+              mkdir -p $APP_DIR
+
+              # -------- FRONTEND DEPLOY --------
+              echo "Deploying frontend..."
+
+              sudo mkdir -p /var/www/html
+
+              # Clean and replace static files
+              sudo rm -rf /var/www/html/*
+              sudo cp -r $FRONTEND_DIR/build/* /var/www/html/
+
+              # -------- BACKEND DEPLOY --------
+              echo "Deploying backend..."
+
+              cd $BACKEND_DIR
+
+              # Create venv only if not exists
+              if [ ! -d "venv" ]; then
+                python3 -m venv venv
+              fi
+
               source venv/bin/activate
+
+              pip install --upgrade pip
               pip install -r requirements.txt
 
-              # Restart Flask
-              pkill -f app.py || true
-              cd flask-be
-              nohup python app.py > app.log 2>&1 &
+              # Restart backend safely using systemd
+              sudo systemctl restart gunicorn
 
-              # Frontend
-              cd ../../frontend
-              npm install
-              npm run build
+              # Reload nginx (no downtime)
+              sudo systemctl reload nginx
 
-              # Restart Next.js
-              pkill -f next || true
-              nohup npm start > frontend.log 2>&1 &
-            "
+              echo "Deployment completed successfully"
+
+            EOF
 
 workflows:
   version: 2
 
-  pipeline:
+  production_pipeline:
     jobs:
-      - build:
+      - build-frontend:
           filters:
             branches:
               only:
-                - develop
+                - main
+
+      - build-backend:
+          filters:
+            branches:
+              only:
                 - main
 
       - deploy:
           requires:
-            - build
+            - build-frontend
+            - build-backend
           filters:
             tags:
               only: /^v.*/
