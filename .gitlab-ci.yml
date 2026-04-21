@@ -2,48 +2,52 @@ stages:
   - build
   - deploy
 
-# BUILD STAGE
 build_frontend:
   stage: build
   image: node:18
   script:
     - cd frontend
-    - npm install
+    - npm ci
     - npm run build
+  artifacts:
+    paths:
+      - frontend/build
   only:
     - main
-    - develop
 
-# DEPLOY STAGE
 deploy_to_ec2:
   stage: deploy
   image: ubuntu:22.04
+
   before_script:
-    - apt update && apt install -y openssh-client git
+    - apt update && apt install -y openssh-client
     - mkdir -p ~/.ssh
-    - echo "qEZ/k6yLVxfbl8Lypzs33n7nI+3KukbXArQNhgDRSyg" > ~/.ssh/id_rsa
+    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
-    - ssh-keyscan -H 13.206.102.133 >> ~/.ssh/known_hosts
+    - ssh-keyscan -H $13.206.102.133 >> ~/.ssh/known_hosts
 
   script:
-    - ssh ubuntu@13.206.102.133 "
-        cd ~/fullstack-app &&
-        git pull origin main &&
+    - scp -r frontend/build ubuntu@13.206.102.133:/home/ubuntu/build
 
-        cd backend &&
-        source venv/bin/activate &&
-        pip install -r requirements.txt &&
+    - ssh ubuntu@$EC2_HOST "
+        set -e
 
-        pkill -f app.py || true &&
-        cd flask-be &&
-        nohup python app.py > app.log 2>&1 &
+        # Frontend
+        sudo rm -rf /var/www/html/*
+        sudo cp -r /home/ubuntu/build/* /var/www/html/
 
-        cd ../../frontend &&
-        npm install &&
-        npm run build &&
+        # Backend
+        cd ~/fullstack-app/backend
 
-        pkill -f next || true &&
-        nohup npm start > frontend.log 2>&1 &
+        if [ ! -d 'venv' ]; then
+          python3 -m venv venv
+        fi
+
+        source venv/bin/activate
+        pip install -r requirements.txt
+
+        sudo systemctl restart gunicorn
+        sudo systemctl reload nginx
       "
 
   only:
